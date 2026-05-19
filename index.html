@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>HeartSync</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --rust:#C4632A;--rust-dk:#A03010;--rust-lt:#FBF0E8;
+  --green:#3B6B4A;--green-lt:#E4EFEA;
+  --amber:#D4820A;--amber-lt:#FEF3DC;
+  --red:#C23434;--red-lt:#FAEAEA;
+  --navy:#2A4878;--navy-lt:#E8F0F8;
+  --cream:#FBF5EC;--cream-dk:#F2EDD8;
+  --dark:#1A1208;--mid:#7A6A52;--lite:#E8E0D4;
+  --black:#0A0602;
+  --font:'Nunito',sans-serif;
+  --serif:'Playfair Display',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#111;font-family:var(--font)}
+#app{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  display:flex;justify-content:center;align-items:center;
+  background:#111;
+}
+.phone-wrap{
+  width:100%;max-width:430px;height:100%;max-height:932px;
+  position:relative;overflow:hidden;background:var(--cream);
+}
+/* Each screen */
+.screen{
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  display:none;flex-direction:column;
+  background:var(--cream);overflow:hidden;
+  animation:slideIn .25s ease;
+}
+.screen.active{display:flex}
+@keyframes slideIn{from{transform:translateX(20px);opacity:.6}to{transform:translateX(0);opacity:1}}
+@keyframes slideBack{from{transform:translateX(-20px);opacity:.6}to{transform:translateX(0);opacity:1}}
+.screen.back{animation:slideBack .25s ease}
+/* STATUS BAR */
+.status-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 20px 4px;flex-shrink:0;font-size:12px;font-weight:700;
+}
+/* SCROLLABLE CONTENT */
+.scroll-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.scroll-content::-webkit-scrollbar{display:none}
+/* BOTTOM NAV */
+.bottom-nav{
+  display:flex;justify-content:space-around;align-items:center;
+  padding:8px 0 max(12px, env(safe-area-inset-bottom));
+  background:var(--cream);border-top:1px solid var(--lite);
+  flex-shrink:0;
+}
+.nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-size:10px;font-weight:700;color:var(--mid);cursor:pointer;
+  padding:4px 12px;border-radius:10px;transition:.2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-item.active{color:var(--rust)}
+.nav-icon{font-size:20px;line-height:1}
+/* BUTTONS */
+.btn{
+  display:flex;align-items:center;justify-content:center;
+  padding:16px 24px;border-radius:14px;border:none;
+  font-family:var(--font);font-size:16px;font-weight:800;
+  cursor:pointer;width:100%;transition:.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn:active{transform:scale(.97)}
+.btn-rust{background:var(--rust);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-outline{background:transparent;color:var(--rust);border:2px solid var(--rust)}
+.btn-ghost{background:rgba(0,0,0,.06);color:var(--dark)}
+.btn-sm{padding:10px 18px;font-size:14px;border-radius:10px}
+/* CARDS */
+.card{background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.07);border:1px solid var(--lite)}
+.card-rust{background:var(--rust-lt);border:1px solid rgba(196,99,42,.2)}
+.card-green{background:var(--green-lt);border:1px solid rgba(59,107,74,.2)}
+.card-navy{background:var(--navy-lt);border:1px solid rgba(42,72,120,.2)}
+.card-amber{background:var(--amber-lt);border:1px solid rgba(212,130,10,.2)}
+/* SECTION TITLE */
+.section-title{font-size:13px;font-weight:800;color:var(--mid);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+/* TOGGLE */
+.toggle-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.toggle{width:48px;height:28px;border-radius:14px;position:relative;cursor:pointer;transition:.2s}
+.toggle.on{background:var(--green)}
+.toggle.off{background:var(--lite)}
+.toggle::after{content:'';position:absolute;top:4px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:.25s}
+.toggle.on::after{right:4px}.toggle.off::after{left:4px}
+/* HR DISPLAY */
+.hr-circle{
+  width:160px;height:160px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;margin:0 auto;
+}
+/* MAP placeholder */
+.map-bg{
+  background:linear-gradient(160deg,#D8E8D0 0%,#E8DFC8 40%,#C8D8E0 100%);
+  border-radius:14px;position:relative;overflow:hidden;
+}
+/* WAVE */
+.wave{height:4px;background:repeating-linear-gradient(90deg,var(--red) 0,var(--red) 6px,transparent 6px,transparent 12px);border-radius:2px;opacity:.6}
+/* PILL BADGE */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.pill-green{background:var(--green-lt);color:var(--green)}
+.pill-rust{background:var(--rust-lt);color:var(--rust)}
+.pill-amber{background:var(--amber-lt);color:var(--amber)}
+.pill-navy{background:var(--navy-lt);color:var(--navy)}
+/* ERA BUTTON */
+.era-btn{
+  border-radius:14px;padding:16px 12px;text-align:center;cursor:pointer;
+  border:2px solid var(--lite);background:#fff;transition:.15s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.era-btn.selected{border-color:var(--rust);background:var(--rust-lt)}
+.era-btn:active{transform:scale(.96)}
+/* SCREEN-SPECIFIC */
+/* DARK screens (jukebox, sos) */
+.dark-screen{background:var(--black)!important}
+
+/* ===== SCREEN 1: WELCOME ===== */
+#s-welcome{background:var(--dark);justify-content:center;align-items:center;text-align:center;padding:40px 32px}
+
+/* ===== SCREEN: ONBOARDING 2 ===== */
+/* ===== WALKING SCREENS ===== */
+.hr-safe{background:radial-gradient(circle,#2A6A38 0%,#1A4A28 100%)}
+.hr-amber{background:radial-gradient(circle,#C8780A 0%,#8A5000 100%)}
+.hr-red{background:radial-gradient(circle,#B22020 0%,#7A1010 100%)}
+
+/* SOS SCREEN */
+#s-sos{background:#1A0000!important}
+
+/* WATCH LINK BUTTON */
+.watch-btn{
+  position:fixed;bottom:max(80px, calc(env(safe-area-inset-bottom) + 80px));
+  right:16px;width:52px;height:52px;border-radius:50%;
+  background:var(--dark);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;box-shadow:0 4px 16px rgba(0,0,0,.4);
+  cursor:pointer;z-index:100;border:2px solid rgba(255,255,255,.1);
+  -webkit-tap-highlight-color:transparent;
+}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="phone-wrap">
+
+<!-- ══════ SCREEN: WELCOME ══════ -->
+<div id="s-welcome" class="screen active" style="background:var(--dark);justify-content:center;align-items:center;text-align:center;padding:40px 32px">
+  <div style="margin-bottom:24px">
+    <div style="width:88px;height:88px;background:var(--rust);border-radius:28px;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:42px;box-shadow:0 8px 32px rgba(196,99,42,.5)">♥</div>
+  </div>
+  <h1 style="font-family:var(--serif);font-size:36px;color:#fff;margin-bottom:8px">HeartSync</h1>
+  <p style="color:rgba(255,255,255,.5);font-size:15px;margin-bottom:8px">Walk with music that moves with you.</p>
+  <p style="color:rgba(255,255,255,.35);font-size:13px;margin-bottom:48px">Safe, connected, made for you.</p>
+  <div style="display:flex;flex-direction:column;gap:12px;width:100%">
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+      <span class="pill" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">🎵 Spotify &amp; Apple Music</span>
+      <span class="pill" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">♥ Heart monitoring</span>
+    </div>
+    <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+      <span class="pill" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">🔄 Rhythm Sync</span>
+      <span class="pill" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6)">📍 Live track alerts</span>
+    </div>
+    <p style="color:rgba(255,255,255,.25);font-size:12px;margin-bottom:12px">✓ Trusted by thousands just like you</p>
+    <button class="btn btn-rust" onclick="goTo('s-profile')" style="font-size:17px;padding:18px">I'm new — get started</button>
+    <button class="btn" onclick="goTo('s-home')" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.6);font-size:16px">I already have an account</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: ABOUT YOU ══════ -->
+<div id="s-profile" class="screen">
+  <div class="status-bar"><span>9:41</span><span>84%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <div style="margin-bottom:24px">
+      <p style="font-size:13px;color:var(--mid);margin-bottom:4px">Step 1 of 3</p>
+      <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark)">About you</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px">
+      <div>
+        <label style="font-size:13px;font-weight:700;color:var(--mid);display:block;margin-bottom:6px">YOUR NAME</label>
+        <div style="background:#fff;border:2px solid var(--lite);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--dark)">James</div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:700;color:var(--mid);display:block;margin-bottom:6px">DATE OF BIRTH</label>
+        <div style="background:#fff;border:2px solid var(--lite);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--dark)">12 / NOV / 1957</div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:700;color:var(--mid);display:block;margin-bottom:6px">PHONE NUMBER</label>
+        <div style="background:#fff;border:2px solid var(--lite);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--dark)">+61 4XX XXX XXX</div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:700;color:var(--mid);display:block;margin-bottom:6px">DOCTOR</label>
+        <div style="background:#fff;border:2px solid var(--lite);border-radius:12px;padding:14px 16px;font-size:16px;color:var(--dark)">Dr. Sarah Williams</div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:700;color:var(--mid);display:block;margin-bottom:6px">SAFE ZONE</label>
+        <div style="background:var(--green-lt);border:2px solid rgba(59,107,74,.2);border-radius:12px;padding:14px 16px;text-align:center">
+          <div style="font-size:28px;font-weight:900;color:var(--green)">55 – 80 bpm</div>
+          <div style="font-size:12px;color:var(--green);margin-top:2px">Beta-blocker adjusted</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-cardiac')">Continue →</button>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px" onclick="goTo('s-welcome')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: CARDIAC ══════ -->
+<div id="s-cardiac" class="screen">
+  <div class="status-bar"><span>9:43</span><span>84%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <p style="font-size:13px;color:var(--mid);margin-bottom:4px">Step 2 of 3</p>
+    <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark);margin-bottom:20px">Your heart situation</h2>
+    <div class="card" style="margin-bottom:14px">
+      <div class="toggle-row">
+        <div>
+          <div style="font-weight:800;color:var(--dark);font-size:15px">I have a cardiac condition</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:2px">Doctor-supervised exercise</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on');this.classList.toggle('off')"></div>
+      </div>
+      <div style="background:var(--green-lt);border-radius:10px;padding:10px 12px;margin-top:12px;font-size:12.5px;color:var(--green);line-height:1.5">
+        ✓ This won't limit what you can do. It means we monitor your heart carefully and guide you calmly if anything changes.
+      </div>
+    </div>
+    <div class="section-title" style="margin-top:18px">CONDITION</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+      <span class="pill pill-rust" style="cursor:pointer">A-fib</span>
+      <span class="pill pill-rust" style="cursor:pointer">Heart failure</span>
+      <span class="pill" style="background:rgba(196,99,42,.12);color:var(--rust);cursor:pointer">Coronary</span>
+      <span class="pill" style="background:var(--lite);color:var(--mid);cursor:pointer">Other</span>
+    </div>
+    <div class="section-title">MEDICATIONS</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="toggle-row">
+        <span style="font-weight:700;color:var(--dark)">Beta-blockers</span>
+        <div class="toggle on"></div>
+      </div>
+      <div style="background:var(--navy-lt);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:12px;color:var(--navy)">
+        ℹ Beta-blockers lower max HR — safe zone adjusted to 55–80 bpm.
+      </div>
+    </div>
+    <div class="section-title">AUTO-SEND WALK REPORTS</div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="toggle-row">
+        <div>
+          <div style="font-weight:700;color:var(--dark);font-size:14px">Doctor: Dr. Sarah Williams</div>
+          <div style="font-size:12px;color:var(--mid)">After each walk</div>
+        </div>
+        <div class="toggle on"></div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-music')">Continue →</button>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px" onclick="goTo('s-profile')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: MUSIC CONNECT ══════ -->
+<div id="s-music" class="screen">
+  <div class="status-bar"><span>9:45</span><span>83%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <p style="font-size:13px;color:var(--mid);margin-bottom:4px">Step 3 of 3</p>
+    <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark);margin-bottom:8px">Your music</h2>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:20px">HeartSync adapts music to your pace automatically. Connect your streaming service.</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px">
+      <div class="card" style="display:flex;align-items:center;gap:14px;border:2px solid var(--rust);background:var(--rust-lt);cursor:pointer" onclick="this.style.borderColor='var(--green)'">
+        <div style="width:44px;height:44px;background:#1DB954;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎵</div>
+        <div><div style="font-weight:800;color:var(--dark)">Spotify</div><div style="font-size:12px;color:var(--mid)">Connected</div></div>
+        <div style="margin-left:auto;color:var(--green);font-weight:800">✓</div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer">
+        <div style="width:44px;height:44px;background:#fc3c44;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🎵</div>
+        <div><div style="font-weight:800;color:var(--dark)">Apple Music</div><div style="font-size:12px;color:var(--mid)">Tap to connect</div></div>
+      </div>
+    </div>
+    <div class="section-title">YOUR MUSIC ERA</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+      <div class="era-btn selected" onclick="selectEra(this)">
+        <div style="font-size:24px;margin-bottom:4px">🎷</div>
+        <div style="font-weight:800;font-size:14px;color:var(--dark)">Big Band</div>
+        <div style="font-size:11px;color:var(--mid)">Your favourite era</div>
+      </div>
+      <div class="era-btn" onclick="selectEra(this)">
+        <div style="font-size:24px;margin-bottom:4px">🎤</div>
+        <div style="font-weight:800;font-size:14px;color:var(--dark)">Crooners</div>
+        <div style="font-size:11px;color:var(--mid)">Sinatra, Como...</div>
+      </div>
+      <div class="era-btn" onclick="selectEra(this)">
+        <div style="font-size:24px;margin-bottom:4px">🎸</div>
+        <div style="font-weight:800;font-size:14px;color:var(--dark)">60s &amp; 70s</div>
+        <div style="font-size:11px;color:var(--mid)">Classic pop</div>
+      </div>
+      <div class="era-btn" onclick="selectEra(this)">
+        <div style="font-size:24px;margin-bottom:4px">🌿</div>
+        <div style="font-weight:800;font-size:14px;color:var(--dark)">Nature</div>
+        <div style="font-size:11px;color:var(--mid)">Calm &amp; ambient</div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-home')">Start walking with HeartSync →</button>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px" onclick="goTo('s-cardiac')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: HOME DASHBOARD ══════ -->
+<div id="s-home" class="screen">
+  <div class="status-bar"><span>8:10</span><span>91%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <p style="font-size:14px;color:var(--mid)">Good morning,</p>
+        <h2 style="font-family:var(--serif);font-size:28px;color:var(--dark)">James 👋</h2>
+      </div>
+      <div style="width:44px;height:44px;background:var(--rust);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;cursor:pointer" onclick="goTo('s-profile')">👤</div>
+    </div>
+    <!-- Auto-play notification -->
+    <div class="card-rust" style="border-radius:16px;padding:14px 16px;margin-bottom:14px;cursor:pointer" onclick="goTo('s-jukebox')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:40px;height:40px;background:var(--rust);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">♪</div>
+        <div style="flex:1">
+          <div style="font-weight:800;color:var(--dark);font-size:14px">Your motivation playlist is ready</div>
+          <div style="font-size:12px;color:var(--mid)">Fly Me to the Moon · Auto-playing</div>
+        </div>
+        <div style="color:var(--rust);font-size:20px">▶</div>
+      </div>
+    </div>
+    <!-- Conditions card -->
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:800;color:var(--dark);font-size:15px;margin-bottom:10px">Today's conditions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="pill pill-green">☀️ 18°C Mild</span>
+        <span class="pill pill-green">🌿 Air: Good</span>
+        <span class="pill pill-green">⏰ Great time to walk</span>
+      </div>
+    </div>
+    <!-- Sound Match -->
+    <div class="card card-navy" style="margin-bottom:14px;cursor:pointer" onclick="goTo('s-map')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:800;color:var(--navy)">Sound Match nearby</div>
+        <span class="pill pill-navy">3 walkers ✓</span>
+      </div>
+      <div style="font-size:13px;color:var(--navy);opacity:.8">Big Band walkers heading out · Coastal Path</div>
+      <div style="display:flex;gap:-6px;margin-top:10px">
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--rust);border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800">M</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--green);border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800;margin-left:-8px">S</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:var(--amber);border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:800;margin-left:-8px">R</div>
+      </div>
+    </div>
+    <!-- Quick stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="card" style="text-align:center">
+        <div style="font-size:26px;font-weight:900;color:var(--dark)">4</div>
+        <div style="font-size:12px;color:var(--mid)">walks this week</div>
+      </div>
+      <div class="card" style="text-align:center">
+        <div style="font-size:26px;font-weight:900;color:var(--green)">91%</div>
+        <div style="font-size:12px;color:var(--mid)">avg safe zone</div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-map')" style="font-size:17px;padding:18px;margin-bottom:10px">Start today's walk →</button>
+    <button class="btn btn-outline btn-sm" onclick="goTo('s-map')">Check Safety Map first</button>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-item active"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="goTo('s-jukebox')"><span class="nav-icon">🎵</span>Music</div>
+    <div class="nav-item" onclick="goTo('s-soundmatch')"><span class="nav-icon">👥</span>Social</div>
+    <div class="nav-item" onclick="goTo('s-stats')"><span class="nav-icon">📊</span>Plan</div>
+  </nav>
+</div>
+
+<!-- ══════ SCREEN: SAFETY MAP ══════ -->
+<div id="s-map" class="screen">
+  <div class="status-bar"><span>8:10</span><span>91%</span></div>
+  <div class="scroll-content" style="padding:16px">
+    <h2 style="font-family:var(--serif);font-size:22px;color:var(--dark);margin-bottom:14px">Coastal Path — Live View</h2>
+    <!-- Map -->
+    <div class="map-bg" style="height:220px;margin-bottom:14px">
+      <svg width="100%" height="100%" viewBox="0 0 360 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="360" height="220" fill="#ECE8E0"/>
+        <!-- Grid roads -->
+        <rect x="0" y="48" width="360" height="8" fill="#fff" opacity=".9"/>
+        <rect x="0" y="96" width="360" height="6" fill="#fff" opacity=".85"/>
+        <rect x="0" y="140" width="360" height="5" fill="#fff" opacity=".8"/>
+        <rect x="56" y="0" width="6" height="160" fill="#fff" opacity=".85"/>
+        <rect x="152" y="0" width="5" height="120" fill="#fff" opacity=".8"/>
+        <rect x="224" y="0" width="5" height="100" fill="#fff" opacity=".75"/>
+        <!-- Park -->
+        <rect x="60" y="8" width="88" height="84" rx="4" fill="#C8D8A8" opacity=".7"/>
+        <!-- Water -->
+        <path fill="#9CBCD0" opacity=".6" d="M0,148 Q90,140 180,136 Q270,132 360,138 L360,220 L0,220Z"/>
+        <!-- Coastal path red line -->
+        <path d="M8,148 Q60,140 120,136 Q180,132 240,130 Q300,128 352,122" stroke="#C4632A" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <!-- User dot -->
+        <circle cx="8" cy="148" r="10" fill="#1A1208"/>
+        <text x="8" y="152" text-anchor="middle" font-size="8" fill="#fff" font-weight="700">J</text>
+        <!-- Verified walkers -->
+        <circle cx="100" cy="137" r="9" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="94" cy="128" r="7" fill="#3B6B4A"/>
+        <text x="94" y="132" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+        <circle cx="148" cy="134" r="9" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="142" cy="125" r="7" fill="#3B6B4A"/>
+        <text x="142" y="129" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+        <circle cx="196" cy="132" r="9" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="190" cy="123" r="7" fill="#3B6B4A"/>
+        <text x="190" y="127" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+        <!-- Group label -->
+        <rect x="82" y="118" width="116" height="14" rx="4" fill="#F5F0E6" opacity=".95"/>
+        <text x="140" y="128" text-anchor="middle" font-size="8" fill="#C4632A" font-weight="700">✓ Tue group heading out →</text>
+      </svg>
+    </div>
+    <!-- Map tabs -->
+    <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:4px">
+      <span class="pill pill-rust" style="flex-shrink:0;cursor:pointer">📍 Route</span>
+      <span class="pill" style="background:var(--lite);color:var(--mid);flex-shrink:0;cursor:pointer">⚠️ Hazard report</span>
+      <span class="pill pill-green" style="flex-shrink:0">✅ All clear</span>
+      <span class="pill pill-navy" style="flex-shrink:0;cursor:pointer;white-space:nowrap" onclick="goTo('s-soundmatch')">👥 Sound Match</span>
+    </div>
+    <!-- Path clear card -->
+    <div class="card card-green" style="margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <div style="font-size:20px">✅</div>
+        <div>
+          <div style="font-weight:800;color:var(--dark)">Path clear at 1.2km</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:2px">Good surface, dry, no obstacles. 8 min ago by Margaret. ✓ 5 walkers confirmed</div>
+        </div>
+      </div>
+    </div>
+    <!-- Verification banner -->
+    <div class="card card-navy" style="margin-bottom:14px;cursor:pointer" onclick="goTo('s-verify')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:22px">🛡️</div>
+        <div>
+          <div style="font-weight:800;color:var(--navy)">All walkers are ID verified</div>
+          <div style="font-size:12px;color:var(--navy);opacity:.7">Government ID or selfie required · Tap to verify yours</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-jukebox')">Looks good — choose music →</button>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px;color:var(--mid)" onclick="goTo('s-home')">← Go back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: IDENTITY VERIFICATION ══════ -->
+<div id="s-verify" class="screen">
+  <div class="status-bar" style="background:var(--navy)"><span style="color:#fff">8:30</span><span style="color:rgba(255,255,255,.6)">89%</span></div>
+  <div class="scroll-content" style="padding:20px;background:linear-gradient(180deg,var(--navy-lt) 0%,var(--cream) 100%)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+      <div style="font-size:28px">🛡️</div>
+      <div>
+        <div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.8px">SOUND MATCH SAFETY</div>
+        <h2 style="font-family:var(--serif);font-size:24px;color:var(--dark)">Verify your identity</h2>
+      </div>
+    </div>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:20px;line-height:1.6">Before joining a group walk, HeartSync verifies all members to keep everyone safe.</p>
+    <!-- Trust badge -->
+    <div class="card card-green" style="margin-bottom:16px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="font-size:22px">🔒</div>
+        <div>
+          <div style="font-weight:800;color:var(--dark);margin-bottom:4px">Your real name is NEVER shared</div>
+          <div style="font-size:13px;color:var(--mid);line-height:1.5">You appear as "Verified Walker" until you choose to share your name with a walking companion.</div>
+        </div>
+      </div>
+    </div>
+    <!-- Verification options -->
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <button class="btn" onclick="verifySuccess()" style="background:var(--navy-lt);color:var(--navy);border:2px solid var(--navy);text-align:left;justify-content:flex-start;gap:14px;padding:16px 18px">
+        <span style="font-size:28px">🪪</span>
+        <div>
+          <div style="font-weight:800;font-size:16px">Upload Government ID</div>
+          <div style="font-size:12px;font-weight:400;opacity:.7">Passport, driver's licence or national ID</div>
+        </div>
+      </button>
+      <button class="btn" onclick="verifySuccess()" style="background:var(--rust-lt);color:var(--rust);border:2px solid var(--rust);text-align:left;justify-content:flex-start;gap:14px;padding:16px 18px">
+        <span style="font-size:28px">📹</span>
+        <div>
+          <div style="font-weight:800;font-size:16px">Record a 5-sec selfie video</div>
+          <div style="font-size:12px;font-weight:400;opacity:.7">AI matches your face. Video deleted after.</div>
+        </div>
+      </button>
+    </div>
+    <!-- Data protection -->
+    <div class="card" style="margin-bottom:20px">
+      <div style="font-size:13px;color:var(--mid);line-height:1.6">🔒 <strong>Data protection:</strong> ID data is encrypted, reviewed by HeartSync only, and deleted after verification. Never stored or shared with other users.</div>
+    </div>
+    <div style="text-align:center;font-size:13px;color:var(--green);font-weight:700;margin-bottom:16px">✓ Verified members only appear to each other</div>
+    <button class="btn btn-ghost" style="color:var(--mid);font-size:14px" onclick="goTo('s-map')">← Go back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: JUKEBOX ══════ -->
+<div id="s-jukebox" class="screen dark-screen">
+  <div class="status-bar" style="background:var(--black)"><span style="color:rgba(255,255,255,.6)">8:12</span><span style="color:rgba(255,255,255,.4)">91%</span></div>
+  <div class="scroll-content" style="padding:20px;background:var(--black)">
+    <!-- Turntable -->
+    <div style="text-align:center;margin-bottom:24px">
+      <div style="position:relative;display:inline-block;margin-bottom:16px">
+        <div style="width:160px;height:160px;border-radius:50%;background:#1A1A1A;margin:0 auto;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 8px rgba(255,255,255,.04),0 8px 40px rgba(0,0,0,.6)">
+          <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#2A2A2A,#1A1A1A);display:flex;align-items:center;justify-content:center">
+            <div style="width:50px;height:50px;border-radius:50%;background:var(--rust);display:flex;align-items:center;justify-content:center">
+              <div style="width:14px;height:14px;border-radius:50%;background:var(--black)"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="font-family:var(--serif);font-size:22px;color:#fff;margin-bottom:4px">Fly Me to the Moon</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">Frank Sinatra · 1964 · From your Spotify</div>
+      <!-- Progress bar -->
+      <div style="background:rgba(255,255,255,.12);border-radius:3px;height:4px;margin:14px 0 8px">
+        <div style="width:35%;height:100%;background:var(--rust);border-radius:3px"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,.35)"><span>1:24</span><span>3:29</span></div>
+      <!-- Controls -->
+      <div style="display:flex;justify-content:center;gap:28px;margin-top:14px;align-items:center">
+        <span style="font-size:24px;color:rgba(255,255,255,.5);cursor:pointer">⏮</span>
+        <div style="width:56px;height:56px;border-radius:50%;background:var(--rust);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;color:#fff">▶</div>
+        <span style="font-size:24px;color:rgba(255,255,255,.5);cursor:pointer">⏭</span>
+      </div>
+    </div>
+    <!-- Era buttons -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div class="era-btn selected" style="background:rgba(196,99,42,.15);border-color:var(--rust)" onclick="selectEra(this)">
+        <div style="font-size:20px;margin-bottom:4px">🎷</div>
+        <div style="font-weight:800;font-size:14px;color:#fff">Big Band</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4)">Your favourite era</div>
+      </div>
+      <div class="era-btn" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)" onclick="selectEra(this)">
+        <div style="font-size:20px;margin-bottom:4px">🎤</div>
+        <div style="font-weight:800;font-size:14px;color:#fff">Crooners</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4)">Sinatra, Como...</div>
+      </div>
+      <div class="era-btn" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)" onclick="selectEra(this)">
+        <div style="font-size:20px;margin-bottom:4px">🎸</div>
+        <div style="font-weight:800;font-size:14px;color:#fff">60s &amp; 70s</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4)">Classic pop</div>
+      </div>
+      <div class="era-btn" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1)" onclick="selectEra(this)">
+        <div style="font-size:20px;margin-bottom:4px">🌿</div>
+        <div style="font-weight:800;font-size:14px;color:#fff">Nature</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4)">Calm &amp; ambient</div>
+      </div>
+    </div>
+    <button class="btn" onclick="goTo('s-walking-safe')" style="background:var(--rust);color:#fff;font-size:17px;padding:18px;margin-bottom:10px">Walk with this music →</button>
+    <button class="btn" onclick="goTo('s-map')" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:14px">← Go back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: WALKING SAFE ══════ -->
+<div id="s-walking-safe" class="screen" style="background:#0A160C">
+  <div class="status-bar" style="background:#0A160C"><span style="color:rgba(255,255,255,.5)">8:28</span><span style="background:#C23434;color:#fff;padding:2px 7px;border-radius:10px;font-size:11px">SOS hold 3 sec</span></div>
+  <div class="scroll-content" style="padding:20px;background:#0A160C">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-weight:800;color:rgba(255,255,255,.5);font-size:13px">Coastal · Active Walk</div>
+    </div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:var(--green);letter-spacing:2px;margin-bottom:12px">✓ SAFE</div>
+      <!-- HR Circle -->
+      <div class="hr-circle hr-safe" style="width:180px;height:180px;margin:0 auto">
+        <div style="font-size:64px;font-weight:900;color:#fff;line-height:1">72</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.7);font-weight:700">BPM</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:10px">Safe zone: 55 – 80 bpm</div>
+    </div>
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#fff">1.1</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">KM</div>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#fff">12</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">MIN</div>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#fff">0.4</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">KM LEFT</div>
+      </div>
+    </div>
+    <!-- Now playing -->
+    <div class="card" style="background:rgba(196,99,42,.12);border:1px solid rgba(196,99,42,.25);display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--rust)"></div>
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:700;color:rgba(255,255,255,.8);font-size:13px">Fly Me to the Moon</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">96 BPM · In Sync ✓ · Coastal sounds</div>
+      </div>
+      <div style="color:rgba(255,255,255,.2);font-size:20px">📊</div>
+    </div>
+    <!-- ECG wave -->
+    <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="display:flex;gap:1px;align-items:center;height:32px">
+        <div style="flex:1;height:2px;background:rgba(59,107,74,.4)"></div>
+        <div style="width:2px;height:32px;background:var(--green)"></div>
+        <div style="width:2px;height:18px;background:var(--green)"></div>
+        <div style="width:2px;height:10px;background:var(--green)"></div>
+        <div style="width:3px;height:28px;background:var(--green)"></div>
+        <div style="width:2px;height:8px;background:var(--green)"></div>
+        <div style="flex:1;height:2px;background:rgba(59,107,74,.4)"></div>
+        <div style="width:2px;height:32px;background:var(--green)"></div>
+        <div style="width:2px;height:18px;background:var(--green)"></div>
+        <div style="width:2px;height:10px;background:var(--green)"></div>
+        <div style="width:3px;height:28px;background:var(--green)"></div>
+        <div style="width:2px;height:8px;background:var(--green)"></div>
+        <div style="flex:1;height:2px;background:rgba(59,107,74,.4)"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="goTo('s-walking-amber')" style="background:var(--amber);color:#fff;flex:1;font-size:14px">Simulate Amber →</button>
+      <button class="btn" onclick="goTo('s-complete')" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);flex:1;font-size:14px">End Walk</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: WALKING AMBER ══════ -->
+<div id="s-walking-amber" class="screen" style="background:#140E02">
+  <div class="status-bar" style="background:#140E02"><span style="color:rgba(255,255,255,.5)">8:31</span><span style="background:#C23434;color:#fff;padding:2px 7px;border-radius:10px;font-size:11px">SOS hold 3 sec</span></div>
+  <div class="scroll-content" style="padding:20px;background:#140E02">
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:700;color:var(--amber);letter-spacing:2px;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="font-size:18px">⚠</span> HR RISING</div>
+      <div class="hr-circle hr-amber" style="width:180px;height:180px;margin:12px auto">
+        <div style="font-size:64px;font-weight:900;color:#fff;line-height:1">76</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.7);font-weight:700">BPM</div>
+      </div>
+      <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:8px">Safe zone: 55 – 80 bpm</div>
+    </div>
+    <div class="card" style="background:rgba(212,130,10,.12);border:1px solid rgba(212,130,10,.3);margin-bottom:12px;text-align:center">
+      <div style="font-weight:800;color:var(--amber);font-size:15px">4 bpm from your limit</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);margin-top:4px">Ease off slightly · One gentle watch buzz sent ⚡</div>
+    </div>
+    <div class="card" style="background:rgba(196,99,42,.1);border:1px solid rgba(196,99,42,.2);display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="width:20px;height:20px;border-radius:50%;background:var(--rust)"></div>
+      </div>
+      <div>
+        <div style="font-weight:700;color:rgba(255,255,255,.6);font-size:13px">88 BPM · Slowing pace...</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.3)">Music adapting to guide you down</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#fff">1.3</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">KM</div>
+      </div>
+      <div class="card" style="background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);text-align:center">
+        <div style="font-size:22px;font-weight:900;color:#fff">14</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)">MIN</div>
+      </div>
+      <div class="card" style="background:rgba(212,130,10,.12);border:1px solid rgba(212,130,10,.2);text-align:center">
+        <div style="font-size:14px;font-weight:900;color:var(--amber)">Easing<br>pace</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="goTo('s-walking-red')" style="background:rgba(194,52,52,.2);color:var(--red);flex:1;font-size:14px">Simulate Red →</button>
+      <button class="btn" onclick="goTo('s-walking-safe')" style="background:rgba(59,107,74,.2);color:var(--green);flex:1;font-size:14px">↩ Safe</button>
+    </div>
+    <button class="btn" onclick="goTo('s-complete')" style="background:rgba(255,255,255,.07);color:rgba(255,255,255,.4);font-size:14px;margin-top:10px">End Walk</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: WALKING RED ══════ -->
+<div id="s-walking-red" class="screen" style="background:#140000">
+  <div class="status-bar" style="background:#140000"><span style="color:rgba(255,255,255,.5)">8:33</span><span style="background:#C23434;color:#fff;padding:2px 7px;border-radius:10px;font-size:11px">SOS hold 3 sec</span></div>
+  <div class="scroll-content" style="padding:20px;background:#140000">
+    <div style="text-align:center;margin:20px 0">
+      <div class="hr-circle hr-red" style="width:200px;height:200px;margin:0 auto">
+        <div style="font-size:72px;font-weight:900;color:#fff;line-height:1">94</div>
+        <div style="font-size:14px;color:rgba(255,255,255,.7);font-weight:700">BPM</div>
+      </div>
+    </div>
+    <div class="card" style="background:rgba(194,52,52,.15);border:1px solid rgba(194,52,52,.4);text-align:center;margin-bottom:16px">
+      <div style="font-family:var(--serif);font-size:28px;font-weight:800;color:var(--red);letter-spacing:3px">SLOW DOWN</div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);margin-top:8px">Take a slow deep breath</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.3);margin-top:4px">Keep walking gently · HR drops in ~60 sec</div>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <button class="btn btn-sm" onclick="goTo('s-home')" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);flex:1">📞 Margaret</button>
+      <button class="btn btn-sm" onclick="goTo('s-sos')" style="background:var(--red);color:#fff;flex:1;font-size:14px;font-weight:900">🆘 SOS</button>
+    </div>
+    <button class="btn" onclick="goTo('s-walking-safe')" style="background:rgba(255,255,255,.06);color:rgba(255,255,255,.4);font-size:14px">I've slowed — recovering →</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: SOS ══════ -->
+<div id="s-sos" class="screen dark-screen">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:32px;background:#1A0000;text-align:center">
+    <div style="font-size:56px;margin-bottom:16px">🆘</div>
+    <div style="font-family:var(--serif);font-size:32px;font-weight:800;color:var(--red);margin-bottom:8px">SOS</div>
+    <div style="font-size:15px;color:rgba(255,255,255,.5);margin-bottom:28px">Calling David (Son)</div>
+    <!-- Countdown ring -->
+    <div style="position:relative;width:120px;height:120px;margin:0 auto 28px">
+      <svg width="120" height="120" viewBox="0 0 120 120" style="position:absolute;top:0;left:0">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(194,52,52,.2)" stroke-width="8"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#C23434" stroke-width="8" stroke-dasharray="215 327" stroke-dashoffset="0" stroke-linecap="round"/>
+      </svg>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;font-weight:900;color:var(--red)">3</div>
+    </div>
+    <div style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:8px">📍 Location sent ✓</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.4);margin-bottom:32px">000 auto-dialling...</div>
+    <div style="display:flex;gap:10px;width:100%">
+      <button class="btn" onclick="goTo('s-walking-red')" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.4);flex:1;font-size:14px">Cancel (crown press)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: WALK COMPLETE ══════ -->
+<div id="s-complete" class="screen">
+  <div class="status-bar"><span>8:46</span><span>88%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <p style="font-size:13px;color:var(--mid);margin-bottom:4px">James · Today at 8:46 AM</p>
+    <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark);margin-bottom:14px">Morning Active Walk ✓</h2>
+    <!-- Map summary -->
+    <div class="map-bg" style="height:100px;margin-bottom:16px;overflow:hidden;border-radius:12px">
+      <svg width="100%" height="100" viewBox="0 0 360 100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="360" height="100" fill="#ECE8E0"/>
+        <path fill="#9CBCD0" opacity=".5" d="M0,60 Q180,50 360,55 L360,100 L0,100Z"/>
+        <path d="M4,60 Q80,52 180,50 Q260,48 356,44" stroke="#C4632A" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="4" cy="60" r="6" fill="#3B6B4A"/>
+        <circle cx="356" cy="44" r="6" fill="#1A1208"/>
+        <text x="18" y="65" font-size="9" fill="#3B6B4A" font-weight="700">Start</text>
+        <text x="306" y="40" font-size="9" fill="#1A1208" font-weight="700">Finish</text>
+      </svg>
+    </div>
+    <!-- Stats grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="card"><div style="font-size:11px;color:var(--mid);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Distance KM</div><div style="font-size:32px;font-weight:900;color:var(--dark)">1.5</div></div>
+      <div class="card"><div style="font-size:11px;color:var(--mid);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Time</div><div style="font-size:32px;font-weight:900;color:var(--dark)">22:14</div></div>
+      <div class="card"><div style="font-size:11px;color:var(--mid);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Avg HR BPM</div><div style="font-size:32px;font-weight:900;color:var(--green)">71</div></div>
+      <div class="card"><div style="font-size:11px;color:var(--mid);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Safe Zone</div><div style="font-size:32px;font-weight:900;color:var(--green)">89%</div></div>
+    </div>
+    <!-- AI note -->
+    <div class="card card-green" style="margin-bottom:14px">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:32px;height:32px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">⭐</div>
+        <div style="font-size:14px;color:var(--dark);line-height:1.5;font-style:italic">"James — you slowed down at exactly the right moment. Goal done. <strong>Genuinely proud.</strong>"</div>
+      </div>
+    </div>
+    <!-- Reward song -->
+    <div class="card-rust" style="border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:16px;cursor:pointer">
+      <div style="width:40px;height:40px;background:var(--black);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0"><div style="width:22px;height:22px;border-radius:50%;background:var(--rust)"></div></div>
+      <div><div style="font-weight:800;color:var(--dark)">Reward — Fly Me to the Moon 🎵</div><div style="font-size:12px;color:var(--mid)">You earned this today</div></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-rust" onclick="goTo('s-mood')" style="flex:1">How did it feel? →</button>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px" onclick="goTo('s-home')">← Back to home</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: MOOD ══════ -->
+<div id="s-mood" class="screen">
+  <div class="status-bar"><span>8:48</span><span>88%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark);margin-bottom:6px">How are you feeling?</h2>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:24px">Right now, after your walk</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:24px">
+      <div onclick="selectMood(this)" style="text-align:center;padding:16px 8px;border:2px solid var(--lite);border-radius:14px;cursor:pointer;background:#fff">
+        <div style="font-size:32px;margin-bottom:4px">😊</div>
+        <div style="font-size:12px;font-weight:700;color:var(--mid)">Great</div>
+      </div>
+      <div onclick="selectMood(this)" style="text-align:center;padding:16px 8px;border:2px solid var(--rust);border-radius:14px;cursor:pointer;background:var(--rust-lt)">
+        <div style="font-size:32px;margin-bottom:4px">😌</div>
+        <div style="font-size:12px;font-weight:700;color:var(--rust)">Good</div>
+      </div>
+      <div onclick="selectMood(this)" style="text-align:center;padding:16px 8px;border:2px solid var(--lite);border-radius:14px;cursor:pointer;background:#fff">
+        <div style="font-size:32px;margin-bottom:4px">😴</div>
+        <div style="font-size:12px;font-weight:700;color:var(--mid)">Tired</div>
+      </div>
+    </div>
+    <div class="section-title">HOW DID MUSIC HELP?</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;color:var(--dark)">Helped me start</span>
+        <div style="display:flex;gap:6px">⭐⭐⭐⭐⭐</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:14px;color:var(--dark)">Paced my walk</span>
+        <div style="display:flex;gap:6px">⭐⭐⭐⭐☆</div>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-tips')">See your health tips →</button>
+    <button class="btn btn-ghost" style="margin-top:10px;font-size:14px" onclick="goTo('s-complete')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: HEALTH TIPS ══════ -->
+<div id="s-tips" class="screen">
+  <div class="status-bar"><span>8:50</span><span>87%</span></div>
+  <div class="scroll-content" style="padding:20px">
+    <h2 style="font-family:var(--serif);font-size:26px;color:var(--dark);margin-bottom:6px">Your health tips</h2>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:20px">Based on today's activity</p>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <div class="card card-green">
+        <div style="font-weight:800;color:var(--dark);margin-bottom:4px">💧 Drink water soon</div>
+        <div style="font-size:13px;color:var(--mid);line-height:1.5">Your heart rate peaked at 76 bpm. Drink 250–300ml of water in the next 15 minutes to support recovery.</div>
+      </div>
+      <div class="card card-rust">
+        <div style="font-weight:800;color:var(--dark);margin-bottom:4px">🧘 Cool down gently</div>
+        <div style="font-size:13px;color:var(--mid);line-height:1.5">Take a slow walk for 2–3 minutes. Your heart rate will return to resting level faster.</div>
+      </div>
+      <div class="card card-navy">
+        <div style="font-weight:800;color:var(--dark);margin-bottom:4px">📅 Next walk</div>
+        <div style="font-size:13px;color:var(--mid);line-height:1.5">You're building a great routine. Try again in 24–48 hours. Same time tomorrow works perfectly.</div>
+      </div>
+    </div>
+    <div class="card card-green" style="margin-bottom:20px">
+      <div style="font-weight:800;color:var(--dark);margin-bottom:6px">📋 Doctor report auto-sent</div>
+      <div style="font-size:13px;color:var(--mid);margin-bottom:10px">Dr. Sarah Williams received your walk summary at 8:47 AM.</div>
+      <div style="font-size:12px;color:var(--green)">Distance: 1.5km · Avg HR: 71bpm · Safe zone: 89%</div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-home')">Back to home →</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: SOUND MATCH ══════ -->
+<div id="s-soundmatch" class="screen">
+  <div class="status-bar"><span>8:14</span><span>91%</span></div>
+  <div class="scroll-content" style="padding:16px">
+    <h2 style="font-family:var(--serif);font-size:22px;color:var(--dark);margin-bottom:4px">Sound Match</h2>
+    <p style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:14px">✓ Verified walkers only — identities confirmed</p>
+    <!-- Sound match map -->
+    <div class="map-bg" style="height:180px;border-radius:14px;overflow:hidden;margin-bottom:14px">
+      <svg width="100%" height="180" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+        <rect width="360" height="180" fill="#ECE8E0"/>
+        <rect x="0" y="40" width="360" height="6" fill="#fff" opacity=".9"/>
+        <rect x="0" y="80" width="360" height="5" fill="#fff" opacity=".85"/>
+        <rect x="80" y="0" width="5" height="120" fill="#fff" opacity=".8"/>
+        <rect x="160" y="0" width="5" height="100" fill="#fff" opacity=".75"/>
+        <rect x="104" y="4" width="52" height="52" rx="3" fill="#C8D8A8" opacity=".6"/>
+        <path fill="#9CBCD0" opacity=".5" d="M0,120 Q90,110 180,105 Q270,100 360,107 L360,180 L0,180Z"/>
+        <path d="M8,120 Q60,112 120,108 Q180,104 240,100 Q300,97 352,92" stroke="#C4632A" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <circle cx="8" cy="120" r="9" fill="#1A1208"/>
+        <text x="8" y="124" text-anchor="middle" font-size="7" fill="#fff" font-weight="700">J</text>
+        <circle cx="90" cy="113" r="8" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="84" cy="104" r="7" fill="#3B6B4A"/>
+        <text x="84" y="108" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+        <circle cx="150" cy="109" r="8" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="144" cy="100" r="7" fill="#3B6B4A"/>
+        <text x="144" y="104" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+        <circle cx="220" cy="102" r="8" fill="#C4632A" stroke="#fff" stroke-width="2"/>
+        <circle cx="214" cy="93" r="7" fill="#3B6B4A"/>
+        <text x="214" y="97" text-anchor="middle" font-size="7" fill="#fff">✓</text>
+      </svg>
+    </div>
+    <!-- Legend -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <span class="pill pill-green" style="font-size:11px">✓ Verified · Big Band</span>
+      <span class="pill" style="background:var(--lite);color:var(--mid);font-size:11px">? Unverified</span>
+    </div>
+    <!-- Nearby walker card -->
+    <div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;background:var(--rust);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;flex-shrink:0">M</div>
+        <div>
+          <div style="font-weight:800;color:var(--dark)">Margaret ✓</div>
+          <div style="font-size:12px;color:var(--mid)">🎷 Big Band · 0.3km</div>
+          <span class="pill pill-green" style="font-size:10px;margin-top:3px">Verified Walker</span>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-green" onclick="goTo('s-buddy')" style="width:auto;font-size:13px;padding:10px 16px">Join →</button>
+    </div>
+    <div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;opacity:.6">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:44px;height:44px;background:var(--mid);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:18px;font-weight:800;flex-shrink:0">?</div>
+        <div>
+          <div style="font-weight:800;color:var(--dark)">Unverified walker</div>
+          <div style="font-size:12px;color:var(--mid)">🎵 Big Band · 0.6km</div>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="goTo('s-verify')" style="width:auto;font-size:12px;padding:8px 12px;color:var(--mid)">Verify to join</button>
+    </div>
+    <div class="card" style="background:var(--rust-lt);border-color:rgba(196,99,42,.2);text-align:center;margin-bottom:10px">
+      <div style="font-size:13px;color:var(--rust);font-weight:700">🔒 Only verified members can join group walks</div>
+    </div>
+    <button class="btn btn-ghost" style="font-size:14px;color:var(--mid)" onclick="goTo('s-home')">← Back to home</button>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="goTo('s-home')"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="goTo('s-jukebox')"><span class="nav-icon">🎵</span>Music</div>
+    <div class="nav-item active"><span class="nav-icon">👥</span>Social</div>
+    <div class="nav-item" onclick="goTo('s-stats')"><span class="nav-icon">📊</span>Plan</div>
+  </nav>
+</div>
+
+<!-- ══════ SCREEN: BUDDY FOUND ══════ -->
+<div id="s-buddy" class="screen">
+  <div class="status-bar"><span>8:14</span><span>91%</span></div>
+  <div class="scroll-content" style="padding:20px;text-align:center">
+    <div style="margin-bottom:6px;font-size:13px;color:var(--green);font-weight:700">◄ Sound Match found!</div>
+    <div style="width:80px;height:80px;background:var(--rust);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;font-weight:800;margin:0 auto 12px">M</div>
+    <h2 style="font-family:var(--serif);font-size:28px;color:var(--dark);margin-bottom:4px">Margaret</h2>
+    <p style="font-size:14px;color:var(--mid);margin-bottom:16px">63 · Coastal walker</p>
+    <span class="pill pill-green" style="font-size:12px;margin-bottom:20px;display:inline-flex">🎷 Big Band &amp; Swing — same as you</span>
+    <div style="display:flex;flex-direction:column;gap:10px;text-align:left;margin-bottom:20px">
+      <div class="card" style="display:flex;justify-content:space-between">
+        <span style="color:var(--mid);font-size:14px">📍 Distance away</span>
+        <span style="font-weight:800;color:var(--dark)">0.3 km</span>
+      </div>
+      <div class="card" style="display:flex;justify-content:space-between">
+        <span style="color:var(--mid);font-size:14px">🚶 Pace</span>
+        <span style="font-weight:800;color:var(--dark)">Easy / gentle</span>
+      </div>
+      <div class="card" style="display:flex;justify-content:space-between">
+        <span style="color:var(--mid);font-size:14px">🎵 Now playing</span>
+        <span style="font-weight:800;color:var(--dark)">Sinatra Walks</span>
+      </div>
+      <div class="card" style="display:flex;justify-content:space-between">
+        <span style="color:var(--mid);font-size:14px">📍 Route</span>
+        <span style="font-weight:800;color:var(--dark)">Coastal · 1.5km</span>
+      </div>
+    </div>
+    <!-- Map preview -->
+    <div class="map-bg" style="height:100px;border-radius:12px;overflow:hidden;margin-bottom:16px">
+      <svg width="100%" height="100" viewBox="0 0 360 100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="360" height="100" fill="#ECE8E0"/>
+        <path fill="#9CBCD0" opacity=".4" d="M0,60 Q180,50 360,55 L360,100 L0,100Z"/>
+        <path d="M4,60 Q80,52 180,50 Q260,48 356,44" stroke="#C4632A" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="4" cy="60" r="8" fill="#1A1208"/>
+        <text x="4" y="64" text-anchor="middle" font-size="7" fill="#fff">J</text>
+        <circle cx="70" cy="54" r="8" fill="#C4632A"/>
+        <text x="70" y="58" text-anchor="middle" font-size="7" fill="#fff">M</text>
+      </svg>
+    </div>
+    <div class="card card-green" style="margin-bottom:16px">
+      <div style="font-size:13px;color:var(--mid);text-align:center;line-height:1.6"><strong style="color:var(--dark)">You don't need to talk.</strong><br>Just walk the same route at a similar pace. Margaret can see you on her map — that's it.</div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-walking-safe')" style="margin-bottom:10px">Walk near Margaret →</button>
+    <button class="btn btn-ghost" style="font-size:14px;color:var(--mid)" onclick="goTo('s-soundmatch')">← Back</button>
+  </div>
+</div>
+
+<!-- ══════ SCREEN: STATS / SUMMARY ══════ -->
+<div id="s-stats" class="screen">
+  <div class="status-bar"><span>10:00</span><span>82%</span></div>
+  <div class="scroll-content" style="padding:16px">
+    <h2 style="font-family:var(--serif);font-size:22px;color:var(--dark);margin-bottom:16px">Summary</h2>
+    <!-- Week bar chart -->
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:800;color:var(--dark);margin-bottom:12px">This week</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:60px;margin-bottom:6px">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="flex:1;width:100%;background:var(--green);border-radius:4px 4px 0 0;height:80%"></div>
+          <div style="font-size:10px;color:var(--mid)">M</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="flex:1;width:100%;background:var(--green);border-radius:4px 4px 0 0;height:65%"></div>
+          <div style="font-size:10px;color:var(--mid)">T</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="width:100%;background:var(--lite);border-radius:4px 4px 0 0;height:20%"></div>
+          <div style="font-size:10px;color:var(--mid)">W</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="width:100%;background:var(--green);border-radius:4px 4px 0 0;height:90%"></div>
+          <div style="font-size:10px;color:var(--mid)">T</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="width:100%;background:var(--green);border-radius:4px 4px 0 0;height:70%"></div>
+          <div style="font-size:10px;color:var(--mid)">F</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="width:100%;background:var(--lite);border-radius:4px 4px 0 0;height:15%"></div>
+          <div style="font-size:10px;color:var(--mid)">S</div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="width:100%;background:var(--lite);border-radius:4px 4px 0 0;height:10%"></div>
+          <div style="font-size:10px;color:var(--mid)">S</div>
+        </div>
+      </div>
+    </div>
+    <!-- Key stats -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+      <div class="card" style="text-align:center"><div style="font-size:26px;font-weight:900;color:var(--dark)">5.8</div><div style="font-size:11px;color:var(--mid)">total km</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:26px;font-weight:900;color:var(--green)">71</div><div style="font-size:11px;color:var(--mid)">avg bpm</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:26px;font-weight:900;color:var(--rust)">33</div><div style="font-size:11px;color:var(--mid)">total min</div></div>
+    </div>
+    <!-- Recent walks -->
+    <div class="section-title">RECENT WALKS</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:800;color:var(--dark)">Morning Active Walk</div><div style="font-size:12px;color:var(--mid)">Today · 22min</div></div>
+        <span class="pill pill-green">1.5km</span>
+      </div>
+      <div class="card" style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:800;color:var(--dark)">Thursday Coastal Walk</div><div style="font-size:12px;color:var(--mid)">Yesterday · 28min</div></div>
+        <span class="pill pill-green">1.8km</span>
+      </div>
+    </div>
+    <button class="btn btn-rust" onclick="goTo('s-home')">Start today's walk →</button>
+  </div>
+  <nav class="bottom-nav">
+    <div class="nav-item" onclick="goTo('s-home')"><span class="nav-icon">🏠</span>Home</div>
+    <div class="nav-item" onclick="goTo('s-jukebox')"><span class="nav-icon">🎵</span>Music</div>
+    <div class="nav-item" onclick="goTo('s-soundmatch')"><span class="nav-icon">👥</span>Social</div>
+    <div class="nav-item active"><span class="nav-icon">📊</span>Plan</div>
+  </nav>
+</div>
+
+</div><!-- /phone-wrap -->
+</div><!-- /app -->
+
+<script>
+let currentScreen = 's-welcome';
+function goTo(id, isBack) {
+  const prev = document.getElementById(currentScreen);
+  const next = document.getElementById(id);
+  if (!next || !prev) return;
+  if (isBack) { next.classList.add('back'); setTimeout(() => next.classList.remove('back'), 300); }
+  prev.classList.remove('active');
+  next.classList.add('active');
+  currentScreen = id;
+  // scroll to top
+  const sc = next.querySelector('.scroll-content');
+  if (sc) sc.scrollTop = 0;
+}
+function selectEra(el) {
+  el.closest('.scroll-content, .screen').querySelectorAll('.era-btn').forEach(b => {
+    b.classList.remove('selected');
+    // Reset dark screen styles
+    if(el.closest('#s-jukebox')) {
+      b.style.background = 'rgba(255,255,255,.05)';
+      b.style.borderColor = 'rgba(255,255,255,.1)';
+    } else {
+      b.style.background = '#fff';
+      b.style.borderColor = 'var(--lite)';
+    }
+  });
+  el.classList.add('selected');
+  if(el.closest('#s-jukebox')) {
+    el.style.background = 'rgba(196,99,42,.15)';
+    el.style.borderColor = 'var(--rust)';
+  }
+}
+function selectMood(el) {
+  el.closest('.scroll-content').querySelectorAll('[onclick^="selectMood"]').forEach(b => {
+    b.style.borderColor = 'var(--lite)';
+    b.style.background = '#fff';
+    b.querySelector('.mood-label') && (b.querySelector('.mood-label').style.color = 'var(--mid)');
+  });
+  el.style.borderColor = 'var(--rust)';
+  el.style.background = 'var(--rust-lt)';
+}
+function verifySuccess() {
+  setTimeout(() => {
+    alert('✅ Identity verified! You now appear as "Verified Walker" on Sound Match.');
+    goTo('s-map');
+  }, 500);
+}
+// Prevent pull-to-refresh and zooming
+document.addEventListener('touchmove', e => e.preventDefault(), {passive: false});
+</script>
+</body>
+</html>
